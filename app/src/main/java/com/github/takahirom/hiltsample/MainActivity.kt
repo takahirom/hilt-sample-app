@@ -20,21 +20,24 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val videoPlayer = VideoPlayer()
+        val videoDatabase = Room
+            .databaseBuilder(
+                App.instance,
+                VideoDatabase::class.java,
+                "database"
+            )
+            .createFromAsset("videos.db")
+            .build()
+        val codecs = listOf(FMP4, WebM, MPEG_TS, AV1)
+        val videoPlayer = VideoPlayer(videoDatabase, codecs)
         videoPlayer.play()
     }
 }
 
-class VideoPlayer {
-    private val database = Room
-        .databaseBuilder(
-            App.instance,
-            VideoDatabase::class.java,
-            "database"
-        )
-        .createFromAsset("videos.db")
-        .build()
-    private val codecs = listOf(FMP4, WebM, MPEG_TS, AV1)
+class VideoPlayer(
+    private val database: VideoDatabase,
+    private val codecs: List<Codec>
+) {
     private var isPlaying = false
 
     fun play() {
