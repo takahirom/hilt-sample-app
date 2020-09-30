@@ -4,7 +4,11 @@ import android.app.Application
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.*
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
+@HiltAndroidApp
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
@@ -16,28 +20,18 @@ class App : Application() {
     }
 }
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    @Inject
+    lateinit var videoPlayer: VideoPlayer
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val videoDatabase = Room
-            .databaseBuilder(
-                App.instance,
-                VideoDatabase::class.java,
-                "database"
-            )
-            .createFromAsset("videos.db")
-            .build()
-        val codecs = listOf(FMP4, WebM, MPEG_TS, AV1)
-        val videoPlayer = VideoPlayer(videoDatabase, codecs)
         videoPlayer.play()
     }
 }
 
-class VideoPlayer(
-    private val database: VideoDatabase,
-    private val codecs: List<Codec>
-) {
+class VideoPlayer @Inject constructor() {
     private var isPlaying = false
 
     fun play() {
