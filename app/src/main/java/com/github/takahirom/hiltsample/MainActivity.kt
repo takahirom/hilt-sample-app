@@ -3,12 +3,15 @@ package com.github.takahirom.hiltsample
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
+import android.os.PersistableBundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.*
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
@@ -34,6 +37,24 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        videoPlayer.play()
+    }
+}
+
+class NonHiltActivity : AppCompatActivity() {
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface NonHiltActivityEntryPoint {
+        fun videoPlayer(): VideoPlayer
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onCreate(savedInstanceState, persistentState)
+        val entryPoint = EntryPointAccessors.fromApplication(
+            applicationContext,
+            NonHiltActivityEntryPoint::class.java
+        )
+        val videoPlayer = entryPoint.videoPlayer()
         videoPlayer.play()
     }
 }
