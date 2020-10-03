@@ -2,8 +2,13 @@ package com.github.takahirom.hiltsample
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import dagger.hilt.components.SingletonComponent
 import org.hamcrest.CoreMatchers.`is`
 import org.junit.Assert.assertThat
 import org.junit.Before
@@ -14,8 +19,21 @@ import org.robolectric.RobolectricTestRunner
 import javax.inject.Inject
 
 @HiltAndroidTest
+@UninstallModules(DataModule::class)
 @RunWith(RobolectricTestRunner::class)
 class VideoPlayerTest {
+    @InstallIn(SingletonComponent::class)
+    @Module
+    class TestDataModule {
+        @Provides
+        fun provideVideoDatabase(): VideoDatabase {
+            return Room.inMemoryDatabaseBuilder(
+                ApplicationProvider.getApplicationContext(),
+                VideoDatabase::class.java
+            ).build()
+        }
+    }
+
     @get:Rule
     var hiltAndroidRule = HiltAndroidRule(this)
 
@@ -29,11 +47,11 @@ class VideoPlayerTest {
 
     @Test
     fun normalTest() {
-        val inMemoryDatabaseBuilder = Room.inMemoryDatabaseBuilder(
+        val database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             VideoDatabase::class.java
-        )
-        val videoPlayer = VideoPlayer(inMemoryDatabaseBuilder.build())
+        ).build()
+        val videoPlayer = VideoPlayer(database)
 
         videoPlayer.play()
 
