@@ -94,7 +94,7 @@ class JustDaggerActivity : AppCompatActivity() {
 class VideoPlayer @Inject constructor(
     private val database: VideoDatabase
 ) {
-    private var isPlaying = false
+    var isPlaying = false
 
     fun play() {
         isPlaying = true
