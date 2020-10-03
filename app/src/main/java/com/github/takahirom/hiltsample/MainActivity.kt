@@ -10,10 +10,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
-import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.scopes.ActivityScoped
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
+import javax.inject.Singleton
 
 @HiltAndroidApp
 class App : Application() {
@@ -78,9 +78,9 @@ data class Video(
 )
 
 @Module
-@InstallIn(ActivityComponent::class)
+@InstallIn(SingletonComponent::class)
 object DataModule {
-    @ActivityScoped
+    @Singleton
     @Provides
     fun provideVideoDB(@ApplicationContext context: Context): VideoDatabase {
         return Room
