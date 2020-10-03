@@ -4,7 +4,10 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.os.PersistableBundle
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.hilt.lifecycle.ViewModelInject
+import androidx.lifecycle.ViewModel
 import androidx.room.*
 import dagger.Module
 import dagger.Provides
@@ -33,12 +36,11 @@ class App : Application() {
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    @Inject
-    lateinit var videoPlayer: VideoPlayer
+    private val videoPlayerViewModel: VideoPlayerViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        videoPlayer.play()
+        videoPlayerViewModel.play()
     }
 }
 
@@ -87,6 +89,14 @@ class JustDaggerActivity : AppCompatActivity() {
         )
         entryPoint.activityComponentFactory().create().inject(this)
 
+        videoPlayer.play()
+    }
+}
+
+class VideoPlayerViewModel @ViewModelInject constructor(
+    private val videoPlayer: VideoPlayer
+) : ViewModel() {
+    fun play() {
         videoPlayer.play()
     }
 }
