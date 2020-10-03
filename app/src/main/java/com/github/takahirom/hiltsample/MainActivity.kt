@@ -6,9 +6,12 @@ import android.os.Bundle
 import android.os.PersistableBundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.room.*
+import com.squareup.inject.assisted.Assisted
+import com.squareup.inject.assisted.AssistedInject
+import com.squareup.inject.assisted.dagger2.AssistedModule
 import dagger.Module
 import dagger.Provides
 import dagger.Subcomponent
@@ -17,6 +20,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
+import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
@@ -36,7 +40,14 @@ class App : Application() {
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    private val videoPlayerViewModel: VideoPlayerViewModel by viewModels()
+    @Inject
+    lateinit var myViewModelAssistedFactory: VideoPlayerViewModel.AssistedFactory
+    private val videoPlayerViewModel: VideoPlayerViewModel by viewModels {
+        VideoPlayerViewModel.provideFactory(
+            myViewModelAssistedFactory, "sample_video_id"
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -79,7 +90,8 @@ interface JustDaggerEntryPoint {
 }
 
 class JustDaggerActivity : AppCompatActivity() {
-    @Inject lateinit var videoPlayer: VideoPlayer
+    @Inject
+    lateinit var videoPlayer: VideoPlayer
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         super.onCreate(savedInstanceState, persistentState)
         // old: appComponent.justDaggerComponent().inject(this)
@@ -93,13 +105,36 @@ class JustDaggerActivity : AppCompatActivity() {
     }
 }
 
-class VideoPlayerViewModel @ViewModelInject constructor(
-    private val videoPlayer: VideoPlayer
+class VideoPlayerViewModel @AssistedInject constructor(
+    private val videoPlayer: VideoPlayer,
+    @Assisted private val videoId: String
 ) : ViewModel() {
     fun play() {
         videoPlayer.play()
     }
+
+    @AssistedInject.Factory
+    interface AssistedFactory {
+        fun create(videoId: String): VideoPlayerViewModel
+    }
+
+    companion object {
+        fun provideFactory(
+            assistedFactory: AssistedFactory,
+            videoId: String
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return assistedFactory.create(videoId) as T
+            }
+        }
+    }
 }
+
+@InstallIn(ActivityComponent::class)
+@AssistedModule
+@Module
+abstract class AssistedInjectModule
+
 
 class VideoPlayer @Inject constructor(
     private val database: VideoDatabase
