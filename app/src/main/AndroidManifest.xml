@@ -18,6 +18,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".NonHiltActivity" />
+        <activity android:name=".JustDaggerActivity" />
     </application>
 
 </manifest>

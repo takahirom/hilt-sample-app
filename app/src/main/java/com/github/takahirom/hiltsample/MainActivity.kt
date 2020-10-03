@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.room.*
 import dagger.Module
 import dagger.Provides
+import dagger.Subcomponent
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -55,6 +56,37 @@ class NonHiltActivity : AppCompatActivity() {
             NonHiltActivityEntryPoint::class.java
         )
         val videoPlayer = entryPoint.videoPlayer()
+        videoPlayer.play()
+    }
+}
+
+@Subcomponent
+interface JustDaggerComponent {
+    @Subcomponent.Factory
+    interface Factory {
+        fun create(): JustDaggerComponent
+    }
+
+    fun inject(justDaggerActivity: JustDaggerActivity)
+}
+
+@InstallIn(SingletonComponent::class)
+@EntryPoint
+interface JustDaggerEntryPoint {
+    fun activityComponentFactory(): JustDaggerComponent.Factory
+}
+
+class JustDaggerActivity : AppCompatActivity() {
+    @Inject lateinit var videoPlayer: VideoPlayer
+    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onCreate(savedInstanceState, persistentState)
+        // old: appComponent.justDaggerComponent().inject(this)
+        val entryPoint = EntryPointAccessors.fromApplication(
+            applicationContext,
+            JustDaggerEntryPoint::class.java
+        )
+        entryPoint.activityComponentFactory().create().inject(this)
+
         videoPlayer.play()
     }
 }
