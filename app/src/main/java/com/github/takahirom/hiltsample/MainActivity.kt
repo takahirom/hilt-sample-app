@@ -4,8 +4,11 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.os.PersistableBundle
-import androidx.activity.viewModels
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.room.*
@@ -40,6 +43,19 @@ class App : Application() {
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        if (savedInstanceState == null) {
+            supportFragmentManager.commit {
+                replace(R.id.fragment_container, PlayerFragment())
+            }
+        }
+    }
+}
+
+@AndroidEntryPoint
+class PlayerFragment : Fragment(R.layout.fragmenet_player) {
     @Inject
     lateinit var myViewModelAssistedFactory: VideoPlayerViewModel.AssistedFactory
     private val videoPlayerViewModel: VideoPlayerViewModel by viewModels {
@@ -48,9 +64,8 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         videoPlayerViewModel.play()
     }
 }
