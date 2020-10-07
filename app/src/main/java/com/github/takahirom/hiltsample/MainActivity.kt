@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -57,16 +58,20 @@ class MainActivity : AppCompatActivity() {
 @AndroidEntryPoint
 class PlayerFragment : Fragment(R.layout.fragmenet_player) {
     @Inject
-    lateinit var myViewModelAssistedFactory: VideoPlayerViewModel.AssistedFactory
+    lateinit var videoPlayerViewModelAssistedFactory: VideoPlayerViewModel.AssistedFactory
     private val videoPlayerViewModel: VideoPlayerViewModel by viewModels {
         VideoPlayerViewModel.provideFactory(
-            myViewModelAssistedFactory, "sample_video_id"
+            videoPlayerViewModelAssistedFactory, "sample_video_id"
         )
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         videoPlayerViewModel.play()
+        view.findViewById<TextView>(R.id.content_text)
+            ?.let {
+                it.text = if(videoPlayerViewModel.isPlaying()) "playing" else "stopped"
+            }
     }
 }
 
@@ -126,6 +131,10 @@ class VideoPlayerViewModel @AssistedInject constructor(
 ) : ViewModel() {
     fun play() {
         videoPlayer.play()
+    }
+
+    fun isPlaying(): Boolean {
+        return videoPlayer.isPlaying
     }
 
     @AssistedInject.Factory
