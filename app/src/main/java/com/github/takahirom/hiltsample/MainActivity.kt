@@ -13,18 +13,17 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.room.*
-import com.squareup.inject.assisted.Assisted
-import com.squareup.inject.assisted.AssistedInject
-import com.squareup.inject.assisted.dagger2.AssistedModule
 import dagger.Module
 import dagger.Provides
 import dagger.Subcomponent
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
-import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
@@ -58,7 +57,7 @@ class MainActivity : AppCompatActivity() {
 @AndroidEntryPoint
 class PlayerFragment : Fragment(R.layout.fragmenet_player) {
     @Inject
-    lateinit var videoPlayerViewModelAssistedFactory: VideoPlayerViewModel.AssistedFactory
+    lateinit var videoPlayerViewModelAssistedFactory: VideoPlayerViewModel.Factory
     private val videoPlayerViewModel: VideoPlayerViewModel by viewModels {
         VideoPlayerViewModel.provideFactory(
             videoPlayerViewModelAssistedFactory, "sample_video_id"
@@ -70,7 +69,7 @@ class PlayerFragment : Fragment(R.layout.fragmenet_player) {
         videoPlayerViewModel.play()
         view.findViewById<TextView>(R.id.content_text)
             ?.let {
-                it.text = if(videoPlayerViewModel.isPlaying()) "playing" else "stopped"
+                it.text = if (videoPlayerViewModel.isPlaying()) "playing" else "stopped"
             }
     }
 }
@@ -137,14 +136,14 @@ class VideoPlayerViewModel @AssistedInject constructor(
         return videoPlayer.isPlaying
     }
 
-    @AssistedInject.Factory
-    interface AssistedFactory {
+    @AssistedFactory
+    interface Factory {
         fun create(videoId: String): VideoPlayerViewModel
     }
 
     companion object {
         fun provideFactory(
-            assistedFactory: AssistedFactory,
+            assistedFactory: Factory,
             videoId: String
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
@@ -153,12 +152,6 @@ class VideoPlayerViewModel @AssistedInject constructor(
         }
     }
 }
-
-@InstallIn(ActivityComponent::class)
-@AssistedModule
-@Module
-abstract class AssistedInjectModule
-
 
 class VideoPlayer @Inject constructor(
     private val database: VideoDatabase
