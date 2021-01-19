@@ -24,6 +24,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
@@ -64,13 +65,18 @@ class PlayerFragment : Fragment(R.layout.fragmenet_player) {
         )
     }
 
+    val viewModelHilt: VideoPlayerHiltViewModel by viewModels()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         videoPlayerViewModel.play()
+
         view.findViewById<TextView>(R.id.content_text)
             ?.let {
                 it.text = if (videoPlayerViewModel.isPlaying()) "playing" else "stopped"
             }
+
+        viewModelHilt.play()
     }
 }
 
@@ -150,6 +156,13 @@ class VideoPlayerViewModel @AssistedInject constructor(
                 return assistedFactory.create(videoId) as T
             }
         }
+    }
+}
+
+@HiltViewModel
+class VideoPlayerHiltViewModel @Inject constructor(val videoPlayer: VideoPlayer) : ViewModel() {
+    fun play() {
+        videoPlayer.play()
     }
 }
 
