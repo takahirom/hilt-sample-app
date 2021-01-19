@@ -11,8 +11,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.room.*
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.Subcomponent
@@ -24,9 +24,15 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
+import dagger.hilt.android.components.ActivityRetainedComponent
+import dagger.hilt.android.components.ViewModelComponent
+import dagger.hilt.android.internal.lifecycle.HiltViewModelMap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoMap
+import dagger.multibindings.IntoSet
+import dagger.multibindings.StringKey
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,13 +63,7 @@ class MainActivity : AppCompatActivity() {
 
 @AndroidEntryPoint
 class PlayerFragment : Fragment(R.layout.fragmenet_player) {
-    @Inject
-    lateinit var videoPlayerViewModelAssistedFactory: VideoPlayerViewModel.Factory
-    private val videoPlayerViewModel: VideoPlayerViewModel by viewModels {
-        VideoPlayerViewModel.provideFactory(
-            videoPlayerViewModelAssistedFactory, "sample_video_id"
-        )
-    }
+    private val videoPlayerViewModel: AbstractVideoPlayerViewModel by viewModels()
 
     val viewModelHilt: VideoPlayerHiltViewModel by viewModels()
 
@@ -130,32 +130,57 @@ class JustDaggerActivity : AppCompatActivity() {
     }
 }
 
+@Module
+@InstallIn(ViewModelComponent::class)
+abstract class BindsModule {
+    @Binds
+    @IntoMap
+    @StringKey("com.github.takahirom.hiltsample.AbstractVideoPlayerViewModel")
+    @HiltViewModelMap
+    abstract fun binds(viewModel: AbstractVideoPlayerViewModel): ViewModel
+}
+
+
+@Module
+@InstallIn(ActivityRetainedComponent::class)
+object KeyModule {
+    @Provides
+    @IntoSet
+    @HiltViewModelMap.KeySet
+    fun provide(): String {
+        return "com.github.takahirom.hiltsample.AbstractVideoPlayerViewModel"
+    }
+}
+
+@Module
+@InstallIn(ViewModelComponent::class)
+class FactoryModule {
+    @Provides
+    fun provide(factory: VideoPlayerViewModel.Factory): AbstractVideoPlayerViewModel {
+        return factory.create("?????")
+    }
+}
+
+abstract class AbstractVideoPlayerViewModel : ViewModel() {
+    abstract fun play()
+    abstract fun isPlaying(): Boolean
+}
+
 class VideoPlayerViewModel @AssistedInject constructor(
     private val videoPlayer: VideoPlayer,
     @Assisted private val videoId: String
-) : ViewModel() {
-    fun play() {
+) : AbstractVideoPlayerViewModel() {
+    override fun play() {
         videoPlayer.play()
     }
 
-    fun isPlaying(): Boolean {
+    override fun isPlaying(): Boolean {
         return videoPlayer.isPlaying
     }
 
     @AssistedFactory
     interface Factory {
         fun create(videoId: String): VideoPlayerViewModel
-    }
-
-    companion object {
-        fun provideFactory(
-            assistedFactory: Factory,
-            videoId: String
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return assistedFactory.create(videoId) as T
-            }
-        }
     }
 }
 
